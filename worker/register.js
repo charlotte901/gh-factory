@@ -376,7 +376,26 @@ async function workbuddyAuth(page, username, password) {
 
 // ==================== 主流程 ====================
 async function main() {
-  info("worker 启动", { round: ROUND_ID, mode: WB_LINK ? "workbuddy" : "register", email: EMAIL });
+  // 公开仓库模式：凭据内部生成，派发参数不携带敏感信息
+  function genEmail() {
+    const c = "abcdefghjkmnpqrstuvwxyz23456789";
+    let s = "gh";
+    for (let i = 0; i < 8; i++) s += c[Math.floor(Math.random() * c.length)];
+    return s + "@98586686.xyz";
+  }
+  function genPassword() {
+    const c = "abcdefghjkmnpqrstuvwxyz23456789";
+    let s = "GH!";
+    for (let i = 0; i < 8; i++) s += c[Math.floor(Math.random() * c.length)];
+    return s;
+  }
+  const ACTUAL_EMAIL = EMAIL || genEmail();
+  const ACTUAL_USERNAME = USERNAME || genUsername();
+  const ACTUAL_PASSWORD = PASSWORD || genPassword();
+  info("worker 启动", { round: ROUND_ID, mode: WB_LINK ? "workbuddy" : "register", email: ACTUAL_EMAIL });
+
+  // 替换后续引用
+
 
   const browser = await launch({
     headless: false,
@@ -415,7 +434,7 @@ async function main() {
       }
       info("表单已加载（datadome 静默通过）");
 
-      await fillSignup(page, EMAIL, PASSWORD, USERNAME);
+      await fillSignup(page, ACTUAL_EMAIL, ACTUAL_PASSWORD, ACTUAL_USERNAME);
       await waitAfterSubmit(page);
 
       // 通知本地：到 launch code 阶段
@@ -435,21 +454,21 @@ async function main() {
       await ghPut("results/" + ROUND_ID + ".json", {
         round_id: ROUND_ID,
         ok: true,
-        username: USERNAME,
-        email: EMAIL,
-        password: PASSWORD,
+        username: ACTUAL_USERNAME,
+        email: ACTUAL_EMAIL,
+        password: ACTUAL_PASSWORD,
         ts: Date.now(),
       });
       info("结果已写入 results/" + ROUND_ID + ".json");
     } else {
       // ========== WorkBuddy 授权模式 ==========
-      const ok = await workbuddyAuth(page, USERNAME, PASSWORD);
+      const ok = await workbuddyAuth(page, USERNAME || ACTUAL_USERNAME, PASSWORD || ACTUAL_PASSWORD);
       if (!ok) throw new Error("授权未确认");
       await ghPut("results/" + ROUND_ID + "_wb.json", {
         round_id: ROUND_ID,
         ok: true,
         phase: "workbuddy_authorized",
-        username: USERNAME,
+        username: USERNAME || ACTUAL_USERNAME,
         ts: Date.now(),
       });
       info("★ 授权结果已写入");
