@@ -1,0 +1,11 @@
+{
+  "name": "ghreg-worker",
+  "version": "1.0.0",
+  "description": "GitHub registration worker (Actions)",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "cloakbrowser": "^0.5.10",
+    "playwright-core": "^1.62.1"
+  }
+}
