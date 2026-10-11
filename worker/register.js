@@ -389,9 +389,10 @@ async function main() {
     for (let i = 0; i < 8; i++) s += c[Math.floor(Math.random() * c.length)];
     return s;
   }
-  const ACTUAL_EMAIL = EMAIL || genEmail();
-  const ACTUAL_USERNAME = USERNAME || genUsername();
-  const ACTUAL_PASSWORD = PASSWORD || genPassword();
+  const valid = (v) => v && v.includes && (v.includes("@") ? v.includes("@") : v.length >= 4) && v !== "-";
+  const ACTUAL_EMAIL = (EMAIL && EMAIL.includes("@")) ? EMAIL : genEmail();
+  const ACTUAL_USERNAME = valid(USERNAME) ? USERNAME : genUsername();
+  const ACTUAL_PASSWORD = valid(PASSWORD) ? PASSWORD : genPassword();
   info("worker 启动", { round: ROUND_ID, mode: WB_LINK ? "workbuddy" : "register", email: ACTUAL_EMAIL });
 
   // 替换后续引用
