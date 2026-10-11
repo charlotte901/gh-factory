@@ -1,0 +1,60 @@
+name: ghreg-register
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        required: true
+        type: string
+      username:
+        required: true
+        type: string
+      password:
+        required: true
+        type: string
+      wb_link:
+        required: false
+        type: string
+        default: ""
+      round_id:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          cd worker && npm install
+
+      - name: Pre-download browser
+        run: |
+          cd worker && npx cloakbrowser install
+
+      - name: Setup headful environment (Xvfb + fonts)
+        run: |
+          sudo apt-get install -y -qq xvfb fonts-liberation >/dev/null 2>&1 || true
+          sudo fc-cache -f >/dev/null 2>&1 || true
+
+      - name: Run worker (headful via Xvfb)
+        env:
+          EMAIL: ${{ inputs.email }}
+          USERNAME: ${{ inputs.username }}
+          PASSWORD: ${{ inputs.password }}
+          WB_LINK: ${{ inputs.wb_link }}
+          ROUND_ID: ${{ inputs.round_id }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd worker && xvfb-run -a --server-args="-screen 0 1920x1080x24" node register.js
