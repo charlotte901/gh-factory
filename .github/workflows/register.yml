@@ -14,7 +14,7 @@ on:
       password:
         required: false
         type: string
-        default: 
+        default: ""
       wb_link:
         required: false
         type: string
@@ -39,18 +39,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd worker && npm install
+          cd worker && npm install 2>&1 | tee ../npm.log
 
       - name: Pre-download browser
         run: |
-          cd worker && npx cloakbrowser install
+          cd worker && npx cloakbrowser install 2>&1 | tee ../browser.log
 
-      - name: Setup headful environment (Xvfb + fonts)
+      - name: Setup headful environment
         run: |
           sudo apt-get install -y -qq xvfb fonts-liberation >/dev/null 2>&1 || true
-          sudo fc-cache -f >/dev/null 2>&1 || true
 
-      - name: Run worker (headful via Xvfb)
+      - name: Run worker
         env:
           EMAIL: ${{ inputs.email }}
           USERNAME: ${{ inputs.username }}
@@ -60,4 +59,16 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd worker && xvfb-run -a --server-args="-screen 0 1920x1080x24" node register.js
+          cd worker && xvfb-run -a --server-args="-screen 0 1920x1080x24" node register.js 2>&1 | tee ../worker-output.log
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-diag
+          path: |
+            npm.log
+            browser.log
+            worker-output.log
+          if-no-files-found: ignore
+          retention-days: 1
