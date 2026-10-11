@@ -4,14 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       email:
-        required: true
+        required: false
         type: string
+        default: ""
       username:
-        required: true
+        required: false
         type: string
+        default: ""
       password:
-        required: true
+        required: false
         type: string
+        default: 
       wb_link:
         required: false
         type: string
